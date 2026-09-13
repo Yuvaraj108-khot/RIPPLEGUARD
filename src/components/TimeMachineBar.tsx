@@ -30,7 +30,7 @@ export const TimeMachineBar: React.FC<TimeMachineBarProps> = ({ onTimeChange }) 
         <span className="text-slate-500 dark:text-slate-400 text-[11px] font-mono">Historical Risk Drift</span>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {snapshots.map((snap, idx) => {
           const isSelected = activeIndex === idx;
           return (

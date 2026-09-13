@@ -12,46 +12,46 @@ export const SbomHealthModal: React.FC<SbomHealthModalProps> = ({ isOpen, onClos
   if (!isOpen || !health) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="security-card rounded-2xl max-w-md w-full p-6 shadow-2xl border border-white/10 space-y-4">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+      <div className="enterprise-card bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-white/10 space-y-4 transition-colors">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-violet-600/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 flex items-center justify-center">
               <Activity className="w-4 h-4" />
             </div>
-            <h3 className="font-bold text-sm text-white tracking-tight">SBOM Graph Confidence Audit</h3>
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white tracking-tight">SBOM Graph Confidence Audit</h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex items-center justify-between bg-slate-900/80 p-4 rounded-xl border border-white/5">
+        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-white/5">
           <div>
-            <span className="text-xs text-slate-400 block font-medium">Topology Confidence Score</span>
-            <span className="text-3xl font-black font-mono text-emerald-400">
+            <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium">Topology Confidence Score</span>
+            <span className="text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400">
               {health.sbom_confidence}%
             </span>
           </div>
-          <span className="px-3 py-1 text-xs font-mono font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+          <span className="px-3 py-1 text-xs font-mono font-bold rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
             {health.status}
           </span>
         </div>
 
         <div className="space-y-2 text-xs">
-          <div className="flex justify-between py-1.5 border-b border-white/5 text-slate-300">
-            <span className="text-slate-400">Discovered Graph Nodes</span>
+          <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-white/5 text-slate-700 dark:text-slate-300">
+            <span className="text-slate-500 dark:text-slate-400">Discovered Graph Nodes</span>
             <span className="font-mono font-semibold">{health.node_count} nodes</span>
           </div>
-          <div className="flex justify-between py-1.5 border-b border-white/5 text-slate-300">
-            <span className="text-slate-400">Transitive Dependency Edges</span>
+          <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-white/5 text-slate-700 dark:text-slate-300">
+            <span className="text-slate-500 dark:text-slate-400">Transitive Dependency Edges</span>
             <span className="font-mono font-semibold">{health.edge_count} edges</span>
           </div>
-          <div className="flex justify-between py-1.5 border-b border-white/5 text-slate-300">
-            <span className="text-slate-400">Disconnected / Orphan Nodes</span>
+          <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-white/5 text-slate-700 dark:text-slate-300">
+            <span className="text-slate-500 dark:text-slate-400">Disconnected / Orphan Nodes</span>
             <span
               className={`font-mono font-semibold ${
-                health.orphan_nodes.length > 0 ? 'text-amber-400' : 'text-emerald-400'
+                health.orphan_nodes.length > 0 ? 'text-amber-500' : 'text-emerald-600 dark:text-emerald-400'
               }`}
             >
               {health.orphan_nodes.length} orphans
@@ -59,7 +59,7 @@ export const SbomHealthModal: React.FC<SbomHealthModalProps> = ({ isOpen, onClos
           </div>
         </div>
 
-        <div className="text-xs text-slate-400 bg-slate-950/60 p-3 rounded-xl border border-white/5 leading-relaxed">
+        <div className="text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-200 dark:border-white/5 leading-relaxed">
           🔒 RippleGuard audits SBOM graph integrity before calculating blast radius to protect against false negatives caused by unmapped transitive relationships.
         </div>
 

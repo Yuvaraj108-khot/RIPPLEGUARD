@@ -98,42 +98,42 @@ export const DemoNarrativeBar: React.FC<DemoNarrativeBarProps> = ({
   const activeStep = DEMO_STEPS[currentStepIndex];
 
   return (
-    <div className="bg-white dark:bg-[#0E131C] border-b border-slate-200 dark:border-white/10 px-6 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs z-20 transition-colors">
+    <div className="bg-white dark:bg-[#0E131C] border-b border-slate-200 dark:border-white/10 px-3 sm:px-6 py-2 flex flex-col lg:flex-row lg:items-center justify-between gap-2 text-xs z-20 transition-colors">
       {/* Playback Controls & Narrative Callout */}
-      <div className="flex items-center space-x-3 shrink-0">
+      <div className="flex items-center space-x-2 sm:space-x-3 shrink-0 overflow-x-auto scrollbar-none py-0.5">
         <button
           onClick={onTogglePlay}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+          className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg font-medium transition-all shrink-0 ${
             isPlaying
               ? 'bg-amber-600 hover:bg-amber-500 text-white'
               : 'bg-blue-600 hover:bg-blue-500 text-white'
           }`}
         >
           {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-          <span>{isPlaying ? 'Pause Demo' : 'Play 2-Min Demo'}</span>
+          <span>{isPlaying ? 'Pause' : 'Play Demo'}</span>
         </button>
 
         <button
           onClick={onReset}
-          className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-[#141A26] border border-slate-200 dark:border-white/10 rounded-lg transition-colors"
+          className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-[#141A26] border border-slate-200 dark:border-white/10 rounded-lg transition-colors shrink-0"
           title="Reset Demo"
         >
           <RotateCcw className="w-3.5 h-3.5" />
         </button>
 
-        <div className="flex items-center space-x-2 border-l border-slate-200 dark:border-white/10 pl-3">
-          <span className="font-mono text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20">
+        <div className="flex items-center space-x-1.5 sm:space-x-2 border-l border-slate-200 dark:border-white/10 pl-2 sm:pl-3 min-w-0">
+          <span className="font-mono text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-500/10 px-1.5 sm:px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20 shrink-0 text-[11px]">
             {activeStep.time}
           </span>
-          <span className="font-semibold text-slate-900 dark:text-white tracking-tight">{activeStep.title}:</span>
-          <span className="text-slate-600 dark:text-slate-400 truncate max-w-[280px] lg:max-w-md hidden sm:inline">
+          <span className="font-semibold text-slate-900 dark:text-white tracking-tight truncate">{activeStep.title}:</span>
+          <span className="text-slate-600 dark:text-slate-400 truncate max-w-[140px] xs:max-w-[200px] sm:max-w-xs md:max-w-md hidden xs:inline">
             {activeStep.description}
           </span>
         </div>
       </div>
 
       {/* Step Scrubber */}
-      <div className="flex items-center space-x-1.5 overflow-x-auto py-0.5 scrollbar-none">
+      <div className="flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto py-0.5 scrollbar-none w-full lg:w-auto">
         {DEMO_STEPS.map((step, idx) => {
           const isActive = idx === currentStepIndex;
           const isPassed = idx < currentStepIndex;
@@ -142,7 +142,7 @@ export const DemoNarrativeBar: React.FC<DemoNarrativeBarProps> = ({
             <button
               key={step.id}
               onClick={() => onSelectStep(idx)}
-              className={`flex items-center space-x-1 px-2.5 py-1 rounded-md text-[11px] font-mono transition-all shrink-0 border ${
+              className={`flex items-center space-x-1 px-2 sm:px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] font-mono transition-all shrink-0 border ${
                 isActive
                   ? 'bg-blue-600 text-white font-semibold border-blue-500 shadow-sm'
                   : isPassed

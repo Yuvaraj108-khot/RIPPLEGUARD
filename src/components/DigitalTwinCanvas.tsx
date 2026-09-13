@@ -60,6 +60,11 @@ export const DigitalTwinCanvas: React.FC<DigitalTwinCanvasProps> = ({
   const computeLayout = (width: number, height: number) => {
     if (nodes.length === 0) return [];
 
+    const isMobile = width < 640;
+    const isTablet = width < 1024;
+    const cardW = isMobile ? 104 : isTablet ? 120 : 135;
+    const cardH = isMobile ? 30 : 34;
+
     const apps = nodes.filter((n) => n.type === 'application');
     const services = nodes.filter((n) => n.type === 'service');
     const libraries = nodes.filter((n) => n.type === 'library');
@@ -73,8 +78,8 @@ export const DigitalTwinCanvas: React.FC<DigitalTwinCanvasProps> = ({
     const distributeCentered = (
       items: GraphNode[],
       y: number,
-      cardW: number,
-      cardH: number,
+      cW: number,
+      cH: number,
       maxSpread: number
     ) => {
       const count = items.length;
@@ -89,9 +94,18 @@ export const DigitalTwinCanvas: React.FC<DigitalTwinCanvasProps> = ({
           targetY: y,
           vx: 0,
           vy: 0,
-          width: cardW,
-          height: cardH,
+          width: cW,
+          height: cH,
         });
+        return;
+      }
+
+      // On mobile or narrow widths, if items exceed 3, split into alternating rows to prevent overlap
+      if (isMobile && count > 3) {
+        const row1 = items.filter((_, i) => i % 2 === 0);
+        const row2 = items.filter((_, i) => i % 2 !== 0);
+        distributeCentered(row1, y - 20, cW, cH, maxSpread);
+        distributeCentered(row2, y + 20, cW, cH, maxSpread);
         return;
       }
 
@@ -110,30 +124,38 @@ export const DigitalTwinCanvas: React.FC<DigitalTwinCanvasProps> = ({
           targetY: y,
           vx: 0,
           vy: 0,
-          width: cardW,
-          height: cardH,
+          width: cW,
+          height: cH,
         });
       });
     };
 
     // Calculate vertical tier spacing centered around centerY
-    // Usable vertical budget is ~320px
-    const tierSpacing = Math.min(height * 0.22, 95);
+    const tierSpacing = Math.min(height * 0.22, isMobile ? 80 : 95);
 
     // Tier 0: Applications (Top)
-    distributeCentered(apps, centerY - tierSpacing * 1.5, 140, 36, width * 0.7);
+    distributeCentered(apps, centerY - tierSpacing * 1.5, cardW + 6, cardH + 2, width * (isMobile ? 0.85 : 0.7));
 
     // Tier 1: Services (Upper-Mid)
-    distributeCentered(services, centerY - tierSpacing * 0.5, 135, 34, width * 0.75);
+    distributeCentered(services, centerY - tierSpacing * 0.5, cardW, cardH, width * (isMobile ? 0.9 : 0.75));
 
     // Tier 2: Libraries (Lower-Mid)
-    distributeCentered(libraries, centerY + tierSpacing * 0.5, 135, 34, width * 0.85);
+    distributeCentered(libraries, centerY + tierSpacing * 0.5, cardW, cardH, width * (isMobile ? 0.95 : 0.85));
 
     // Tier 3: Micro-dependencies (Bottom)
-    distributeCentered(microDeps, centerY + tierSpacing * 1.5, 135, 34, width * 0.6);
+    distributeCentered(microDeps, centerY + tierSpacing * 1.5, cardW, cardH, width * (isMobile ? 0.85 : 0.6));
 
     return result;
   };
+
+  // Adjust zoom for mobile screens automatically on mount
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const width = containerRef.current.clientWidth || 900;
+    if (width < 640) {
+      setZoom(0.65);
+    }
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current || nodes.length === 0) return;
@@ -438,10 +460,92 @@ export const DigitalTwinCanvas: React.FC<DigitalTwinCanvasProps> = ({
       }
     };
 
+    // Touch Event Handlers for Mobile, Tablet, and Touchscreens
+    let lastTouchDist = 0;
+    let touchStartTime = 0;
+    let touchStartPos = { x: 0, y: 0 };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        touchStartTime = Date.now();
+        touchStartPos = { x: touch.clientX, y: touch.clientY };
+        dragStartRef.current = { x: touch.clientX, y: touch.clientY };
+        isDraggingRef.current = true;
+      } else if (e.touches.length === 2) {
+        isDraggingRef.current = false;
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        lastTouchDist = Math.hypot(dx, dy);
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1 && isDraggingRef.current) {
+        if (e.cancelable) e.preventDefault();
+        const touch = e.touches[0];
+        setPan((prev) => ({
+          x: prev.x + (touch.clientX - dragStartRef.current.x),
+          y: prev.y + (touch.clientY - dragStartRef.current.y),
+        }));
+        dragStartRef.current = { x: touch.clientX, y: touch.clientY };
+      } else if (e.touches.length === 2) {
+        if (e.cancelable) e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        if (lastTouchDist > 0) {
+          const factor = dist / lastTouchDist;
+          const rect = canvas.getBoundingClientRect();
+          const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+          const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+          const newZoom = Math.min(Math.max(zoom * factor, 0.4), 2.5);
+          setPan((prev) => ({
+            x: midX - (midX - prev.x) * (newZoom / zoom),
+            y: midY - (midY - prev.y) * (newZoom / zoom),
+          }));
+          setZoom(newZoom);
+        }
+        lastTouchDist = dist;
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      isDraggingRef.current = false;
+      lastTouchDist = 0;
+      // Detect tap selection
+      if (Date.now() - touchStartTime < 350) {
+        const dx = Math.abs(dragStartRef.current.x - touchStartPos.x);
+        const dy = Math.abs(dragStartRef.current.y - touchStartPos.y);
+        if (dx < 12 && dy < 12) {
+          const rect = canvas.getBoundingClientRect();
+          const graphX = (touchStartPos.x - rect.left - pan.x) / zoom;
+          const graphY = (touchStartPos.y - rect.top - pan.y) / zoom;
+          const tapped = canvasNodesRef.current.find((n) => {
+            return (
+              graphX >= n.x - n.width / 2 &&
+              graphX <= n.x + n.width / 2 &&
+              graphY >= n.y - n.height / 2 &&
+              graphY <= n.y + n.height / 2
+            );
+          });
+          if (tapped) {
+            onSelectNode(tapped);
+            setHoveredNode(tapped);
+          } else {
+            setHoveredNode(null);
+          }
+        }
+      }
+    };
+
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mouseup', handleMouseUp);
     canvas.addEventListener('wheel', handleWheel, { passive: false });
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
 
     return () => {
       cancelAnimationFrame(animId);
@@ -449,6 +553,9 @@ export const DigitalTwinCanvas: React.FC<DigitalTwinCanvasProps> = ({
       canvas.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mouseup', handleMouseUp);
       canvas.removeEventListener('wheel', handleWheel);
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
   }, [edges, simulation, selectedNodeId, viewMode, neutralizedEdges, pan, zoom, isLight]);
 
@@ -466,98 +573,103 @@ export const DigitalTwinCanvas: React.FC<DigitalTwinCanvasProps> = ({
   };
 
   const resetView = () => {
-    setZoom(0.92);
+    const w = containerRef.current?.clientWidth || 900;
+    setZoom(w < 640 ? 0.65 : 0.92);
     setPan({ x: 0, y: 0 });
   };
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full min-h-[540px] enterprise-card rounded-2xl overflow-hidden flex flex-col select-none"
+      className="relative w-full h-[55vh] sm:h-full min-h-[380px] sm:min-h-[520px] enterprise-card rounded-2xl overflow-hidden flex flex-col select-none touch-none"
     >
-      {/* View Mode Toggle Controls */}
-      <div className="absolute top-4 left-4 z-20 flex items-center space-x-2">
-        <div className="flex items-center space-x-1 bg-white/90 dark:bg-[#101520]/90 backdrop-blur-md p-1 rounded-xl border border-slate-200 dark:border-white/10 shadow-md dark:shadow-lg">
+      {/* Top View Mode & Zoom Controls Toolbar */}
+      <div className="absolute top-3 left-3 right-3 z-20 flex items-center justify-between gap-2 pointer-events-none">
+        {/* View Mode Toggle Controls */}
+        <div className="flex items-center space-x-1 bg-white/95 dark:bg-[#101520]/95 backdrop-blur-md p-1 rounded-xl border border-slate-200 dark:border-white/10 shadow-md dark:shadow-lg pointer-events-auto max-w-[calc(100%-105px)] overflow-x-auto scrollbar-none">
           <button
             onClick={() => onSetViewMode('topology')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            className={`flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 ${
               viewMode === 'topology'
                 ? 'bg-blue-600 text-white font-semibold shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
+            title="Topology Map"
           >
             <Eye className="w-3.5 h-3.5" />
-            <span>Topology Map</span>
+            <span><span className="hidden xs:inline">Topology </span>Map</span>
           </button>
 
           <button
             onClick={() => onSetViewMode('attack')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            className={`flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 ${
               viewMode === 'attack'
                 ? 'bg-rose-600 text-white font-semibold shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
+            title="Attack Cascade Simulation"
           >
             <Flame className="w-3.5 h-3.5" />
-            <span>Attack Cascade</span>
+            <span><span className="hidden xs:inline">Attack </span>Cascade</span>
           </button>
 
           <button
             onClick={() => onSetViewMode('safe')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            className={`flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 ${
               viewMode === 'safe'
                 ? 'bg-emerald-600 text-white font-semibold shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
+            title="Neutralized Safe Path"
           >
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Neutralized Safe Path</span>
+            <span>Safe Path</span>
+          </button>
+        </div>
+
+        {/* Zoom / Pan Controls */}
+        <div className="flex items-center space-x-0.5 sm:space-x-1 bg-white/95 dark:bg-[#101520]/95 backdrop-blur-md p-1 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 shadow-md pointer-events-auto shrink-0">
+          <button
+            onClick={() => handleZoomBtn(1.15)}
+            className="p-1 sm:p-1.5 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            title="Zoom In"
+          >
+            <ZoomIn className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
+          </button>
+          <button
+            onClick={() => handleZoomBtn(0.85)}
+            className="p-1 sm:p-1.5 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            title="Zoom Out"
+          >
+            <ZoomOut className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
+          </button>
+          <button
+            onClick={resetView}
+            className="p-1 sm:p-1.5 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            title="Reset Camera"
+          >
+            <RotateCcw className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
           </button>
         </div>
       </div>
 
-      {/* Zoom / Pan Controls */}
-      <div className="absolute top-4 right-4 z-20 flex items-center space-x-1 bg-white/90 dark:bg-[#101520]/90 backdrop-blur-md p-1 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 shadow-sm">
-        <button
-          onClick={() => handleZoomBtn(1.15)}
-          className="p-1.5 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-          title="Zoom In"
-        >
-          <ZoomIn className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => handleZoomBtn(0.85)}
-          className="p-1.5 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-          title="Zoom Out"
-        >
-          <ZoomOut className="w-4 h-4" />
-        </button>
-        <button
-          onClick={resetView}
-          className="p-1.5 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-          title="Reset Camera"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
       {/* Bottom Minimalist Legend */}
-      <div className="absolute bottom-4 left-4 z-20 bg-white/90 dark:bg-[#101520]/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-[11px] font-mono flex items-center space-x-4 text-slate-600 dark:text-slate-300 shadow-sm">
+      <div className="absolute bottom-3 left-3 right-3 sm:right-auto z-20 bg-white/90 dark:bg-[#101520]/90 backdrop-blur-md px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 dark:border-white/10 text-[10px] sm:text-[11px] font-mono flex flex-wrap items-center gap-x-3 gap-y-1 text-slate-600 dark:text-slate-300 shadow-sm max-w-[calc(100%-1.5rem)] sm:max-w-none">
         <div className="flex items-center space-x-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-          <span>Vulnerable Target</span>
+          <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+          <span>Target</span>
         </div>
         <div className="flex items-center space-x-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-          <span>Tier-1 Application</span>
+          <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+          <span>App/Service</span>
         </div>
         <div className="flex items-center space-x-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
-          <span>Transitive Dependency</span>
+          <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+          <span>Library</span>
         </div>
         <div className="flex items-center space-x-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-          <span>Mitigated Safe</span>
+          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>Safe Path</span>
         </div>
       </div>
 

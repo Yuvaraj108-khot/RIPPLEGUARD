@@ -185,22 +185,22 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUpl
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 max-h-[90vh] flex flex-col transition-colors">
+    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 max-h-[90vh] flex flex-col transition-colors overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 shrink-0">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-violet-600/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 flex items-center justify-center">
-              <UploadCloud className="w-5 h-5" />
+          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+            <div className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl bg-violet-600/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+              <UploadCloud className="w-4 sm:w-5 h-4 sm:h-5" />
             </div>
-            <div>
-              <h3 className="font-bold text-base text-slate-900 dark:text-white tracking-tight">Upload Manifest or SBOM</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">CycloneDX 1.4/1.5 JSON or deep multi-tier package manifests</p>
+            <div className="min-w-0">
+              <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white tracking-tight truncate">Upload Manifest or SBOM</h3>
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">CycloneDX 1.4/1.5 JSON or package manifests</p>
             </div>
           </div>
           <button 
             onClick={onClose} 
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -213,10 +213,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUpl
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               <span>Quick Complex Test Presets:</span>
             </span>
-            <span className="text-[11px] text-slate-500">Click to autofill</span>
+            <span className="text-[11px] text-slate-500 hidden xs:inline">Click to autofill</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => setJsonText(JSON.stringify(CYCLONEDX_ENTERPRISE_SAMPLE, null, 2))}
