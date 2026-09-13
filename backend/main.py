@@ -62,8 +62,8 @@ class AIExplainRequest(BaseModel):
     }
 
 @app.get("/api")
-@app.get("/")
-def root_info():
+def api_info():
+
     return {
         "name": "RippleGuard API",
         "description": "Explainable Software Supply-Chain Digital Twin API Engine",
@@ -223,6 +223,10 @@ if os.path.isdir(assets_dir):
 if os.path.isdir(dist_dir) and os.path.isfile(os.path.join(dist_dir, "index.html")):
     from fastapi.responses import FileResponse
 
+    @app.get("/")
+    async def serve_spa_root():
+        return FileResponse(os.path.join(dist_dir, "index.html"))
+
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
         # Don't intercept API routes
@@ -232,6 +236,11 @@ if os.path.isdir(dist_dir) and os.path.isfile(os.path.join(dist_dir, "index.html
         if full_path and os.path.isfile(file_path):
             return FileResponse(file_path)
         return FileResponse(os.path.join(dist_dir, "index.html"))
+else:
+    @app.get("/")
+    def fallback_root():
+        return api_info()
+
 
 if __name__ == "__main__":
     import uvicorn
