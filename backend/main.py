@@ -19,14 +19,23 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for Vite frontend
+# Enable CORS with flexible production origins
+cors_origins_env = os.environ.get("CORS_ORIGINS", "*")
+if cors_origins_env == "*":
+    allow_origins = ["*"]
+    allow_credentials = False
+else:
+    allow_origins = [orig.strip() for orig in cors_origins_env.split(",") if orig.strip()]
+    allow_credentials = True
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=allow_origins,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 class SimulationRequest(BaseModel):
     scenario_id: str = "ecommerce_microservices"
@@ -52,9 +61,30 @@ class AIExplainRequest(BaseModel):
         "effort": "Low"
     }
 
+@app.get("/api")
+@app.get("/")
+def root_info():
+    return {
+        "name": "RippleGuard API",
+        "description": "Explainable Software Supply-Chain Digital Twin API Engine",
+        "version": "1.0.0",
+        "status": "healthy",
+        "endpoints": [
+            "/api/health",
+            "/api/scenarios",
+            "/api/graph/{scenario_id}",
+            "/api/simulate",
+            "/api/ripple-breaker/replay",
+            "/api/ai-explain",
+            "/api/upload"
+        ]
+    }
+
+@app.get("/health")
 @app.get("/api/health")
 def health_check():
     return {"status": "ok", "service": "RippleGuard Digital Twin Engine", "version": "1.0.0"}
+
 
 @app.get("/api/scenarios")
 def get_scenarios():
@@ -182,3 +212,31 @@ async def upload_manifest(file: UploadFile = File(...)):
         return {"status": "success", "scenario": metadata}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+# Optional static file serving for all-in-one container deployment
+dist_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "dist"))
+assets_dir = os.path.join(dist_dir, "assets")
+if os.path.isdir(assets_dir):
+    from starlette.staticfiles import StaticFiles
+    app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+if os.path.isdir(dist_dir) and os.path.isfile(os.path.join(dist_dir, "index.html")):
+    from fastapi.responses import FileResponse
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Don't intercept API routes
+        if full_path.startswith("api/") or full_path == "api" or full_path == "health":
+            raise HTTPException(status_code=404, detail="API endpoint not found")
+        file_path = os.path.join(dist_dir, full_path)
+        if full_path and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(dist_dir, "index.html"))
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    host = os.environ.get("HOST", "0.0.0.0")
+    print(f"🚀 Starting RippleGuard Digital Twin Backend on http://{host}:{port}")
+    uvicorn.run("main:app", host=host, port=port, reload=False)
+

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, UploadCloud, FileJson, AlertTriangle, Sparkles, Layers, ShieldAlert } from 'lucide-react';
+import { api } from '../services/api';
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -173,23 +174,9 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onUpl
     setError(null);
 
     try {
-      const blob = new Blob([jsonText], { type: 'application/json' });
-      const formData = new FormData();
-      formData.append('file', blob, 'manifest.json');
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errJson = await response.json().catch(() => ({}));
-        throw new Error(errJson.detail || 'Failed to parse manifest');
-      }
-
-      const data = await response.json();
+      const scenario = await api.uploadManifest(jsonText);
       setLoading(false);
-      onUploadSuccess(data.scenario.id);
+      onUploadSuccess(scenario.id);
       onClose();
     } catch (err: any) {
       setLoading(false);

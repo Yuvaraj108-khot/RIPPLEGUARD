@@ -18,6 +18,7 @@ import {
   MitigationOption,
   GroundedAIExplanation,
 } from './types/rippleguard';
+import { api } from './services/api';
 
 export default function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -61,44 +62,42 @@ export default function App() {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  // Fetch initial scenarios list
+  // Fetch initial scenarios list via resilient API service
   useEffect(() => {
-    fetch('/api/scenarios')
-      .then((res) => res.json())
-      .then((data) => {
-        setScenarios(data);
-        setBackendConnected(true);
-      })
-      .catch((err) => {
-        console.error('FastAPI backend connection error:', err);
-        setBackendConnected(false);
+    let isMounted = true;
+    api.getScenarios().then(({ scenarios: data, isBackendLive }) => {
+      if (!isMounted) return;
+      setScenarios(data);
+      setBackendConnected(isBackendLive);
+    });
+
+    // Periodic check to detect when cold-starting backend comes online
+    const interval = setInterval(() => {
+      api.checkHealth().then((isLive) => {
+        if (isMounted) setBackendConnected(isLive);
       });
+    }, 15000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   // Fetch active graph topology
   const loadGraph = (scenarioId: string) => {
-    fetch(`/api/graph/${scenarioId}`)
-      .then((res) => res.json())
+    api.getGraph(scenarioId)
       .then((data) => {
         setNodes(data.nodes);
         setEdges(data.edges);
         setGraphHealth(data.graph_health);
       })
-      .catch((err) => console.error(err));
+      .catch((err) => console.error('Error loading graph:', err));
   };
 
   // Run compromise simulation
   const runSimulation = (scenarioId: string, targetNode?: string) => {
-    fetch('/api/simulate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        scenario_id: scenarioId,
-        target_node: targetNode || null,
-        scenario_type: 'malicious_release',
-      }),
-    })
-      .then((res) => res.json())
+    api.simulate(scenarioId, targetNode)
       .then((data) => {
         setSimulation(data.simulation);
         setRisk(data.risk);
@@ -108,7 +107,7 @@ export default function App() {
           setSelectedMitigationId(data.mitigations[0].id);
         }
       })
-      .catch((err) => console.error(err));
+      .catch((err) => console.error('Error running simulation:', err));
   };
 
   useEffect(() => {
@@ -145,24 +144,20 @@ export default function App() {
     setIsMitigationApplied(true);
     setViewMode('safe');
 
-    fetch('/api/ripple-breaker/replay', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        scenario_id: activeScenarioId,
-        target_node: simulation?.target.id || 'pkg_event_stream',
-        mitigation_id: mitigation.id,
-      }),
-    })
-      .then((res) => res.json())
+    api.replayMitigation(
+      activeScenarioId,
+      simulation?.target.id || 'pkg_event_stream',
+      mitigation.id
+    )
       .then((data) => {
         setNeutralizedEdges(data.neutralized_edges);
       })
-      .catch((err) => console.error(err));
+      .catch((err) => console.error('Error replaying mitigation:', err));
   };
 
   return (
     <div className="min-h-screen flex flex-col font-sans transition-colors">
+
       {/* Top Navbar */}
       <Navbar
         scenarios={scenarios}

@@ -124,16 +124,19 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Live Status Pill */}
         <div className="flex items-center space-x-2 border-l border-slate-200 dark:border-white/10 pl-3">
-          <div className="flex items-center space-x-1.5 text-[11px] font-mono">
+          <div
+            className="flex items-center space-x-1.5 text-[11px] font-mono cursor-help"
+            title={backendConnected ? "Connected to live FastAPI Digital Twin Engine" : "Running in autonomous demo mode with verified benchmark datasets (FastAPI backend offline or starting up)"}
+          >
             {backendConnected ? (
               <>
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span className="text-slate-600 dark:text-slate-400 hidden lg:inline">Engine Online</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium hidden lg:inline">Engine Live</span>
               </>
             ) : (
               <>
-                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                <span className="text-amber-500 dark:text-amber-400 hidden lg:inline">Connecting...</span>
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                <span className="text-slate-600 dark:text-slate-400 font-medium hidden lg:inline">Demo Mode</span>
               </>
             )}
           </div>
