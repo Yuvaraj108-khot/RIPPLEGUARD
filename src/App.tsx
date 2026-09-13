@@ -20,6 +20,8 @@ import {
 } from './types/rippleguard';
 
 export default function App() {
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [activeScenarioId, setActiveScenarioId] = useState<string>('ecommerce_microservices');
   const [nodes, setNodes] = useState<GraphNode[]>([]);
@@ -31,7 +33,7 @@ export default function App() {
   const [mitigations, setMitigations] = useState<MitigationOption[]>([]);
   const [aiExplanation, setAiExplanation] = useState<GroundedAIExplanation | null>(null);
 
-  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedMitigationId, setSelectedMitigationId] = useState<string | null>('mit_1');
   const [isMitigationApplied, setIsMitigationApplied] = useState<boolean>(false);
   const [neutralizedEdges, setNeutralizedEdges] = useState<Array<{ from: string; to: string }>>([]);
@@ -43,6 +45,21 @@ export default function App() {
   const [isUploadOpen, setIsUploadOpen] = useState<boolean>(false);
   const [isHealthOpen, setIsHealthOpen] = useState<boolean>(false);
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
+
+  // Synchronize theme with root document class
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
 
   // Fetch initial scenarios list
   useEffect(() => {
@@ -145,7 +162,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0E17] text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen flex flex-col font-sans transition-colors">
       {/* Top Navbar */}
       <Navbar
         scenarios={scenarios}
@@ -158,6 +175,8 @@ export default function App() {
         onOpenUpload={() => setIsUploadOpen(true)}
         onOpenHealth={() => setIsHealthOpen(true)}
         backendConnected={backendConnected}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       {/* 2-Minute Butterfly Effect Demo Narrative Bar */}
@@ -183,18 +202,19 @@ export default function App() {
               nodes={nodes}
               edges={edges}
               simulation={simulation}
-              selectedNodeId={selectedNode?.id || null}
+              selectedNodeId={selectedNodeId}
               onSelectNode={(node) => {
-                setSelectedNode(node);
+                setSelectedNodeId(node.id);
                 runSimulation(activeScenarioId, node.id);
               }}
               viewMode={viewMode}
               onSetViewMode={setViewMode}
               neutralizedEdges={neutralizedEdges}
+              theme={theme}
             />
           </div>
 
-          {/* Supply-Chain Time Machine Timeline Slider */}
+          {/* Supply-Chain Time Machine Timeline */}
           <TimeMachineBar onTimeChange={(snapId) => console.log('Time machine snapshot:', snapId)} />
         </section>
 

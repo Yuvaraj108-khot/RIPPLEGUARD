@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { History, Calendar, TrendingUp } from 'lucide-react';
+import { History, Calendar } from 'lucide-react';
 
 interface TimeMachineBarProps {
   onTimeChange: (snapshot: string) => void;
@@ -7,10 +7,10 @@ interface TimeMachineBarProps {
 
 export const TimeMachineBar: React.FC<TimeMachineBarProps> = ({ onTimeChange }) => {
   const snapshots = [
-    { id: 't1', label: 'Nov 2025 (Clean)', risk: 12 },
-    { id: 't2', label: 'Jan 2026 (Dep Added)', risk: 38 },
-    { id: 't3', label: 'Mar 2026 (CVE Released)', risk: 72 },
-    { id: 't4', label: 'Current (Present)', risk: 87 },
+    { id: 't1', month: 'Nov 2025', desc: 'Clean Baseline', risk: 12 },
+    { id: 't2', month: 'Jan 2026', desc: 'Dependency Added', risk: 38 },
+    { id: 't3', month: 'Mar 2026', desc: 'CVE Disclosed', risk: 72 },
+    { id: 't4', month: 'Present', desc: 'Cascade Exposure', risk: 87 },
   ];
 
   const [activeIndex, setActiveIndex] = useState(3);
@@ -21,38 +21,43 @@ export const TimeMachineBar: React.FC<TimeMachineBarProps> = ({ onTimeChange }) 
   };
 
   return (
-    <div className="glass-panel rounded-2xl p-4 border border-cyber-border space-y-2">
-      <div className="flex items-center justify-between text-xs font-mono">
-        <div className="flex items-center space-x-2 text-cyber-cyan font-bold">
+    <div className="enterprise-card rounded-2xl p-4 border border-slate-200 dark:border-white/10 space-y-3">
+      <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center space-x-2 text-blue-600 dark:text-sky-400 font-semibold">
           <History className="w-4 h-4" />
-          <span>SUPPLY-CHAIN TIME MACHINE</span>
+          <span className="tracking-tight">SUPPLY-CHAIN TIME MACHINE</span>
         </div>
-        <span className="text-slate-400 text-[11px]">Historical Risk Snapshot Evolution</span>
+        <span className="text-slate-500 dark:text-slate-400 text-[11px] font-mono">Historical Risk Drift</span>
       </div>
 
-      <div className="flex items-center justify-between pt-2 space-x-2">
+      <div className="grid grid-cols-4 gap-2">
         {snapshots.map((snap, idx) => {
           const isSelected = activeIndex === idx;
           return (
             <button
               key={snap.id}
               onClick={() => handleSelect(idx)}
-              className={`flex-1 p-2 rounded-xl text-center font-mono border transition-all text-xs ${
+              className={`p-2.5 rounded-xl text-left border transition-all text-xs relative ${
                 isSelected
-                  ? 'bg-cyber-violet/20 border-cyber-violet text-white font-bold shadow-md shadow-cyber-violet/20'
-                  : 'bg-cyber-card/60 border-cyber-border text-slate-400 hover:text-white hover:bg-cyber-hover'
+                  ? 'bg-blue-50 dark:bg-blue-600/20 border-blue-500 text-slate-900 dark:text-white shadow-sm ring-1 ring-blue-500/30'
+                  : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900/70'
               }`}
             >
-              <div className="text-[10px] text-slate-400 flex items-center justify-center space-x-1">
+              <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center space-x-1">
                 <Calendar className="w-3 h-3" />
-                <span>{snap.label.split(' ')[0]}</span>
+                <span>{snap.month}</span>
               </div>
-              <div className="text-sm font-extrabold mt-0.5">
-                <span className={snap.risk >= 80 ? 'text-cyber-rose' : snap.risk >= 50 ? 'text-cyber-amber' : 'text-cyber-emerald'}>
+              <div className="text-sm font-bold font-mono mt-1 flex items-baseline space-x-1">
+                <span
+                  className={
+                    snap.risk >= 80 ? 'text-rose-600 dark:text-rose-400' : snap.risk >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
+                  }
+                >
                   {snap.risk}
                 </span>
-                <span className="text-[10px] text-slate-400">/100</span>
+                <span className="text-[10px] text-slate-400 font-normal">/100</span>
               </div>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{snap.desc}</p>
             </button>
           );
         })}

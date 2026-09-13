@@ -1,5 +1,10 @@
 import React from 'react';
-import { ShieldCheck, Zap, ArrowRight, CheckCircle2, Sliders, Sparkles } from 'lucide-react';
+import { 
+  ShieldCheck, 
+  Sparkles, 
+  Check, 
+  TrendingDown
+} from 'lucide-react';
 import { MitigationOption } from '../types/rippleguard';
 
 interface RippleBreakerPanelProps {
@@ -15,84 +20,104 @@ export const RippleBreakerPanel: React.FC<RippleBreakerPanelProps> = ({
   onApplyMitigation,
   isApplied,
 }) => {
-  const activeMitigation = mitigations.find((m) => m.id === selectedMitigationId) || mitigations[0];
-
   return (
-    <div className="glass-panel rounded-2xl p-5 border border-cyber-border space-y-4">
+    <div className="enterprise-card rounded-2xl p-5 border border-slate-200 dark:border-white/10 space-y-4 shadow-sm dark:shadow-xl">
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-cyber-border">
-        <div className="flex items-center space-x-2">
-          <div className="p-2 rounded-xl bg-cyber-emerald/10 border border-cyber-emerald/30 text-cyber-emerald">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10">
+        <div className="flex items-center space-x-2.5">
+          <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-sm text-white font-mono flex items-center space-x-2">
-              <span>RIPPLE BREAKER OPTIMIZER</span>
-              <span className="px-2 py-0.5 text-[10px] bg-cyber-emerald/20 text-cyber-emerald rounded-full border border-cyber-emerald/30">
-                BREAK ENGINE
+            <div className="flex items-center space-x-2">
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white tracking-tight">
+                RIPPLE BREAKER OPTIMIZER
+              </h3>
+              <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-emerald-100 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-400 rounded border border-emerald-200 dark:border-emerald-500/30">
+                INTERVENTION
               </span>
-            </h3>
-            <p className="text-xs text-slate-400 font-mono">
-              Smallest practical intervention capable of stopping the cascade
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Identifies minimal-effort interventions to neutralize downstream blast radius
             </p>
           </div>
         </div>
       </div>
 
-      {/* Candidate List */}
-      <div className="space-y-3">
+      {/* Ranked Candidate Mitigations */}
+      <div className="space-y-2.5">
         {mitigations.map((m) => {
           const isSelected = selectedMitigationId === m.id;
           return (
             <div
               key={m.id}
               onClick={() => onApplyMitigation(m)}
-              className={`p-4 rounded-xl border transition-all cursor-pointer ${
+              className={`p-3.5 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
                 isSelected
-                  ? 'bg-cyber-emerald/10 border-cyber-emerald shadow-lg shadow-cyber-emerald/10'
-                  : 'bg-cyber-card/60 border-cyber-border hover:bg-cyber-hover hover:border-slate-500'
+                  ? 'bg-emerald-50/80 dark:bg-emerald-950/20 border-emerald-500 ring-1 ring-emerald-500/20 shadow-sm'
+                  : 'bg-slate-50 dark:bg-[#0E131C] border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-[#141A26] hover:border-slate-300 dark:hover:border-white/10'
               }`}
             >
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start space-x-3">
-                  <span className="w-6 h-6 rounded-full bg-cyber-emerald/20 text-cyber-emerald font-extrabold text-xs flex items-center justify-center border border-cyber-emerald/40 mt-0.5">
+                  <div
+                    className={`w-6 h-6 rounded-md text-xs font-bold font-mono flex items-center justify-center shrink-0 mt-0.5 border ${
+                      m.priority === 1
+                        ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/40 font-black'
+                        : 'bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10'
+                    }`}
+                  >
                     #{m.priority}
-                  </span>
+                  </div>
+
                   <div>
-                    <h4 className="font-bold text-xs text-white font-mono">{m.action}</h4>
-                    <p className="text-[11px] text-slate-300 mt-1">{m.description}</p>
+                    <div className="flex items-center space-x-2">
+                      <h4 className="font-semibold text-xs text-slate-900 dark:text-white tracking-tight">
+                        {m.action}
+                      </h4>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-transparent">
+                        {m.target_app}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                      {m.description}
+                    </p>
                   </div>
                 </div>
 
+                {/* Risk Reduction & Effort */}
                 <div className="text-right shrink-0 font-mono">
-                  <span className="text-sm font-extrabold text-cyber-emerald block">
-                    -{m.risk_reduction_pct}% RISK
-                  </span>
-                  <span className="text-[10px] text-slate-400 bg-cyber-card px-2 py-0.5 rounded border border-cyber-border inline-block mt-1">
+                  <div className="flex items-center space-x-1 justify-end text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+                    <TrendingDown className="w-3.5 h-3.5" />
+                    <span>-{m.risk_reduction_pct}% Risk</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">
                     {m.effort} effort
                   </span>
                 </div>
               </div>
 
-              {/* Action Button inside card */}
+              {/* Action Footer for Active Selection */}
               {isSelected && (
-                <div className="mt-3 pt-3 border-t border-cyber-border/60 flex items-center justify-between text-xs font-mono">
-                  <span className="text-slate-400 text-[11px]">
-                    Neutralizes {m.safe_edges_neutralized} propagation edges
+                <div className="mt-3 pt-3 border-t border-emerald-200 dark:border-emerald-500/20 flex items-center justify-between text-xs">
+                  <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400/90 flex items-center space-x-1">
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Neutralizes {m.safe_edges_neutralized} propagation edges</span>
                   </span>
+
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onApplyMitigation(m);
                     }}
-                    className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                       isApplied
-                        ? 'bg-cyber-emerald text-white'
-                        : 'bg-gradient-to-r from-cyber-emerald to-cyber-cyan text-slate-950 hover:opacity-90 shadow-md shadow-cyber-emerald/20'
+                        ? 'bg-emerald-600 text-white font-semibold'
+                        : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm'
                     }`}
                   >
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>{isApplied ? 'Mitigation Applied (Safe Replay)' : 'Apply Patch & Replay Safe Path'}</span>
+                    <span>{isApplied ? 'Safe Path Replay Active' : 'Apply & Replay Safe Path'}</span>
                   </button>
                 </div>
               )}
